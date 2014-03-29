@@ -19,10 +19,9 @@
 
 #define MAX_THREADS 10	// maximum number of threads
 
-//pthread_mutex_t mutex1 = PTHREAD_MUTEX_INITIALIZER;
+// Global variables
 pthread_mutex_t mutex1;
 int pth_count = 0;
-
 
 // This is the thread function
 void *reserveFunc(void *arg){
@@ -34,20 +33,6 @@ void *reserveFunc(void *arg){
 }
 
 int main(void){
-	/* this approach passes pth_count to the thread
-	pthread_t pth[MAX_THREADS];
-	int j, k, returnCode;
-
-	for(j = 0; j < MAX_THREADS; j++){
-		printf("In main: creating thread %d\n", j);
-		returnCode = pthread_create(&pth[j], NULL, reserveFunc, &pth_count);
-		if(returnCode){
-			printf("ERROR: return code from pthread_create is %d\n", returnCode);
-			exit(-1);
-		}
-	}	 end of approach */
-
-	/* this approach does not pass an argument to the thread - it uses a global var */
 	pthread_mutex_init(&mutex1, NULL);
 	pthread_t pth[MAX_THREADS];
 	int j, k, returnCode;
