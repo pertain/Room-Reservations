@@ -12,8 +12,7 @@
  * ===========================================================================
  */
 
-//#include "Reservations.h"
-#include <stdlib.h>
+//#include <stdlib.h>	// needed for: malloc(), realloc(), free(), exit()
 #include <stdio.h>
 #include <pthread.h>	// needed for pthreads
 
@@ -41,7 +40,8 @@ int main(void){
 		returnCode = pthread_create(&pth[j], NULL, reserveFunc, NULL);
 		if(returnCode){
 			printf("ERROR: return code from pthread_creat is %d\n", returnCode);
-			exit(-1);
+			//exit(-1); // needs #include <stdlib.h>
+			return -1;
 		}
 	}
 
