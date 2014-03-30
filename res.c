@@ -51,10 +51,11 @@ int main(void){
 	fflush(stdout);
 
 	if(scanf("%d%c", &numTh, &term) != 2 || term != '\n' /*  */ || numTh < 0 || numTh > 10){
-		printf("Invalid input\n");
+		printf("\nInvalid input\n\n");
 		return 0;
 	}
 	
+	printf("\n");
 	for(j = 0; j < numTh; j++){
 		printf("In main: creating thread %d\n", j);
 		returnCode = pthread_create(&pth[j], NULL, reserveFunc, NULL);
@@ -68,7 +69,7 @@ int main(void){
 		pthread_join(pth[k], NULL);
 	}
 
-	printf("This is main saying goodbye!\n");
+	printf("This is main saying goodbye!\n\n");
 
 	free(pth);
 	pthread_mutex_destroy(&mutex1);
