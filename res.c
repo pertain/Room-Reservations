@@ -73,7 +73,7 @@ int main(void){
 	printf("Choice: ");
 	fflush(stdout);
 
-	if(scanf("%d%c", &numTh, &term) != 2 || term != '\n' || numTh < 0 || numTh > 10){
+	if(scanf("%d%c", &numTh, &term) != 2 || term != '\n' || numTh < 0 || numTh > MAX_THREADS){
 		printf("\nInvalid input\n\n");
 		return 0;
 	}
