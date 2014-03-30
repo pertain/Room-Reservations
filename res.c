@@ -15,8 +15,17 @@
 #include <stdlib.h>		// needed for: malloc(), realloc(), free(), exit()
 #include <stdio.h>
 #include <pthread.h>	// needed for pthreads
+#include <string.h>		// needed for strcpy()
 
 #define MAX_THREADS 10	// maximum number of threads
+
+struct room{
+	int roomNum;
+	int size;
+	int status;
+	int requesterID;
+	char requesterEmail[256];
+};
 
 // Global variables
 pthread_mutex_t mutex1;
@@ -33,6 +42,7 @@ void *reserveFunc(void *arg){
 
 int main(void){
 	/* this approach implements a dynamic array of threads */
+	struct room rooms[26];
 	int returnCode, j, k;
 	int numTh = 0;
 	char term;
@@ -44,13 +54,23 @@ int main(void){
 		return 1;
 	}
 
+	/* this section is for testing the room struct */
+	rooms[0].roomNum = 404;
+	rooms[0].size = 0;
+	rooms[0].status = 0;
+	rooms[0].requesterID = 123456;
+	strcpy(rooms[0].requesterEmail,  "something@somewhere.com");
+	printf("\nThis is the contents of rooms[0]\n\n");
+	printf("Room: %d\nSize: %d\nStatus: %d\nRequesterID: %d\nEmail: %s\n\n", rooms[0].roomNum, rooms[0].size, rooms[0].status, rooms[0].requesterID, rooms[0].requesterEmail);
+	/* end of testing of room struct - build on this */
+
 	/* user inputs int for number of threads to create */
 	printf("\nHow many threads do you want?\n");
 	printf("Enter an int between 1 and 10\n");
 	printf("Choice: ");
 	fflush(stdout);
 
-	if(scanf("%d%c", &numTh, &term) != 2 || term != '\n' /*  */ || numTh < 0 || numTh > 10){
+	if(scanf("%d%c", &numTh, &term) != 2 || term != '\n' || numTh < 0 || numTh > 10){
 		printf("\nInvalid input\n\n");
 		return 0;
 	}
