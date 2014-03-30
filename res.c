@@ -12,7 +12,7 @@
  * ===========================================================================
  */
 
-//#include <stdlib.h>	// needed for: malloc(), realloc(), free(), exit()
+#include <stdlib.h>		// needed for: malloc(), realloc(), free(), exit()
 #include <stdio.h>
 #include <pthread.h>	// needed for pthreads
 
@@ -32,25 +32,45 @@ void *reserveFunc(void *arg){
 }
 
 int main(void){
+	/* this approach implements a dynamic array of threads */
+	int returnCode, j, k;
+	int numTh = 0;
+	char term;
 	pthread_mutex_init(&mutex1, NULL);
-	pthread_t pth[MAX_THREADS];
-	int j, k, returnCode;
-	for(j = 0; j < MAX_THREADS; j++){
+	pthread_t *pth;
+	pth = malloc(MAX_THREADS * sizeof(int *));
+	if(pth == NULL){
+		printf("ERROR: memory could not be allocated!\n");
+		return 1;
+	}
+
+	/* user inputs int for number of threads to create */
+	printf("\nHow many threads do you want?\n");
+	printf("Enter an int between 1 and 10\n");
+	printf("Choice: ");
+	fflush(stdout);
+
+	if(scanf("%d%c", &numTh, &term) != 2 || term != '\n' /*  */ || numTh < 0 || numTh > 10){
+		printf("Invalid input\n");
+		return 0;
+	}
+	
+	for(j = 0; j < numTh; j++){
 		printf("In main: creating thread %d\n", j);
 		returnCode = pthread_create(&pth[j], NULL, reserveFunc, NULL);
 		if(returnCode){
 			printf("ERROR: return code from pthread_creat is %d\n", returnCode);
-			//exit(-1); // needs #include <stdlib.h>
 			return -1;
 		}
 	}
 
-	for(k = 0; k < MAX_THREADS; k++){
+	for(k = 0; k < numTh; k++){
 		pthread_join(pth[k], NULL);
 	}
 
 	printf("This is main saying goodbye!\n");
 
+	free(pth);
 	pthread_mutex_destroy(&mutex1);
 	pthread_exit(NULL);
 }
