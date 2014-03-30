@@ -62,6 +62,9 @@ int main(void){
 	strcpy(rooms[0].requesterEmail,  "something@somewhere.com");
 	printf("\nThis is the contents of rooms[0]\n\n");
 	printf("Room: %d\nSize: %d\nStatus: %d\nRequesterID: %d\nEmail: %s\n\n", rooms[0].roomNum, rooms[0].size, rooms[0].status, rooms[0].requesterID, rooms[0].requesterEmail);
+
+	printf("\nThis is the contents of rooms[1]\n\n");
+	printf("Room: %d\nSize: %d\nStatus: %d\nRequesterID: %d\nEmail: %s\n\n", rooms[1].roomNum, rooms[1].size, rooms[1].status, rooms[1].requesterID, rooms[1].requesterEmail);
 	/* end of testing of room struct - build on this */
 
 	/* user inputs int for number of threads to create */
