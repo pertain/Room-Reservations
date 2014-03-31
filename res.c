@@ -5,9 +5,15 @@
  *       Created:  03/26/2014
  *        Author:  William Ersing
  *
- *   Description:  Reservations is a room reservation system for the TCNJ
- *  			   library. It is multithreaded (using POSIX), and threads
- *  			   are handles by a scheduling algorithm.
+ *   Description:  Reservations.c is a multithreaded room reservation simulator
+ *   			   for the TCNJ library. The user is prompted to enter an
+ *   			   integer that represents a number of concurrent reservation
+ *   			   requests. The program then asks for user-specific info,
+ *   			   such as user ID, email, and requested room, for each of the
+ *   			   "requests." Once all info is gathered, a separate thread is
+ *   			   dispatched for each "request." Each thread is responsible
+ *   			   for reserving one room. Once all threads have finished, they
+ *   			   are joined with the main thread and the program exits.
  *
  * ===========================================================================
  */
@@ -32,29 +38,6 @@ struct room{
 };
 struct room calender[NUM_DAYS][NUM_HOURS][NUM_ROOMS];	// 3D array of days, hours, and rooms
 
-/* initializes rooms array with structs for each room in the library
-struct room rooms[NUM_ROOMS] = {{109, 0, 0, -1, ""}, {110, 1, 0, -1, ""}, {111, 0, 0, -1, ""},
-								{202, 1, 0, -1, ""}, {205, 1, 0, -1, ""}, {220, 2, 0, -1, ""},
-								{224, 2, 0, -1, ""}, {225, 1, 0, -1, ""}, {226, 1, 0, -1, ""},
-								{228, 1, 0, -1, ""}, {301, 1, 0, -1, ""}, {308, 1, 0, -1, ""},
-								{309, 1, 0, -1, ""}, {310, 1, 0, -1, ""}, {311, 1, 0, -1, ""},
-								{315, 1, 0, -1, ""}, {316, 1, 0, -1, ""}, {317, 1, 0, -1, ""},
-								{319, 1, 0, -1, ""}, {404, 0, 0, -1, ""}, {406, 1, 0, -1, ""},
-								{411, 1, 0, -1, ""}, {412, 1, 0, -1, ""}, {413, 2, 0, -1, ""},
-								{414, 1, 0, -1, ""}, {415, 1, 0, -1, ""}};
-								*/
-
-/*
-// initializes each cell in calender[i][j] with rooms array - result is a 3D array of structs
-for(i = 0; i < NUM_DAYS; i++){
-	for(j = 0; j < NUM_HOURS; j++){
-		memcpy(&calender, rooms, sizeof(rooms));
-	}
-}
-*/
-
-
-
 /* represents a requesting person - gets passed to a thread */
 struct request{
 	int id;				// user input for user id
@@ -64,11 +47,11 @@ struct request{
 	int rmRequested;	// user input for room number requested
 };
 
-// Global variables
+/* Global variables */
 pthread_mutex_t mutex1;	// initialize mutex lock
 int pth_count = 0;		// used to identify a thread
 
-// This is the thread function
+/* This is the thread function */
 void *reserveFunc(void *arg){
 	struct request inSt = *(struct request *)arg;
 	int i, alternateRoom;
@@ -76,12 +59,14 @@ void *reserveFunc(void *arg){
 	for(i = 0; i < NUM_ROOMS; i++){
 		if(calender[inSt.day][inSt.time][i].roomNum == inSt.rmRequested && calender[inSt.day][inSt.time][i].status == 0){
 			successful = 1;
+			/* begin critical region */
 			pthread_mutex_lock(&mutex1);
 			calender[inSt.day][inSt.time][i].requesterID = inSt.id;
 			strcpy(calender[inSt.day][inSt.time][i].requesterEmail, inSt.email);
 			calender[inSt.day][inSt.time][i].status = 1;
-			printf("CONFIRMATION #%d:\troom (%d) reserved for user (%d) on day (%d) at time (%d)\n", pth_count, calender[inSt.day][inSt.time][i].roomNum, calender[inSt.day][inSt.time][i].requesterID, inSt.day, inSt.time);
+			printf("\nCONFIRMATION #%d:  room (%d) reserved for user (%d) on day (%d) at time (%d)\n", pth_count, calender[inSt.day][inSt.time][i].roomNum, calender[inSt.day][inSt.time][i].requesterID, inSt.day, inSt.time);
 			pthread_mutex_unlock(&mutex1);
+			/* end critical region */
 		}
 		else if(calender[inSt.day][inSt.time][i].roomNum != inSt.rmRequested && calender[inSt.day][inSt.time][i].status == 0){
 			alternateRoom = i;
@@ -89,19 +74,21 @@ void *reserveFunc(void *arg){
 	}
 	if(successful == 0){
 		successful = 1;
+		/* begin critical region */
 		pthread_mutex_lock(&mutex1);
 		calender[inSt.day][inSt.time][alternateRoom].requesterID = inSt.id;
 		strcpy(calender[inSt.day][inSt.time][alternateRoom].requesterEmail, inSt.email);
 		calender[inSt.day][inSt.time][alternateRoom].status = 1;
-		printf("CONFIRMATION #%d:\troom (%d) reserved for user (%d) on day (%d) at time (%d)\n", pth_count, calender[inSt.day][inSt.time][alternateRoom].roomNum, calender[inSt.day][inSt.time][alternateRoom].requesterID, inSt.day, inSt.time);
+		printf("\nCONFIRMATION #%d:  room (%d) reserved for user (%d) on day (%d) at time (%d)\n", pth_count, calender[inSt.day][inSt.time][alternateRoom].roomNum, calender[inSt.day][inSt.time][alternateRoom].requesterID, inSt.day, inSt.time);
 		pthread_mutex_unlock(&mutex1);
+		/* end critical region */
 	}
 
+	/* begin critical region */
 	pthread_mutex_lock(&mutex1);
-	//printf("I am thread %d\n", pth_count);
-	//printf("inSt[%d].id = %d\n", pth_count, inSt.id);
 	pth_count++;
 	pthread_mutex_unlock(&mutex1);
+	/* end critical region */
 	pthread_exit(NULL);
 }
 
@@ -109,8 +96,7 @@ int main(void){
 	int returnCode, i, j, k;								// loop iterator ints
 	int numTh = 0;											// initializer for number of threads
 	char term;												// terminating char for input
-	//struct room calender[NUM_DAYS][NUM_HOURS][NUM_ROOMS];	// 3D array of days, hours and rooms
-	struct request *requests;
+	struct request *requests;								// initialize dynamic array of requests
 	requests = malloc(MAX_THREADS * sizeof(*requests));		// check that this is correct!!!
 	pthread_mutex_init(&mutex1, NULL);						// initialize mutex
 	pthread_t *pth;											// initialize dynamic array of threads
@@ -120,40 +106,10 @@ int main(void){
 		return 1;
 	}
 
-	//int nums[26] = {109, 110, 111, 202, 205, 220, 224, 225, 226, 228, 301, 308, 309, 310, 311, 315, 316, 317, 319, 404, 406, 411, 412, 413, 414, 415};
-
-	/* initializes rooms array with structs for each room in the library
-	struct room rooms[NUM_ROOMS] = {{nums[0], 0, 0, -1, ""}, {nums[1], 1, 0, -1, ""}, {nums[2], 0, 0, -1, ""},
-									{nums[3], 1, 0, -1, ""}, {nums[4], 1, 0, -1, ""}, {nums[5], 2, 0, -1, ""},
-									{nums[6], 2, 0, -1, ""}, {nums[7], 1, 0, -1, ""}, {nums[8], 1, 0, -1, ""},
-									{nums[9], 1, 0, -1, ""}, {nums[10], 1, 0, -1, ""}, {nums[11], 1, 0, -1, ""},
-									{nums[12], 1, 0, -1, ""}, {nums[13], 1, 0, -1, ""}, {nums[14], 1, 0, -1, ""},
-									{nums[15], 1, 0, -1, ""}, {nums[16], 1, 0, -1, ""}, {nums[17], 1, 0, -1, ""},
-									{nums[18], 1, 0, -1, ""}, {nums[19], 0, 0, -1, ""}, {nums[20], 1, 0, -1, ""},
-									{nums[21], 1, 0, -1, ""}, {nums[22], 1, 0, -1, ""}, {nums[23], 2, 0, -1, ""},
-									{nums[24], 1, 0, -1, ""}, {nums[25], 1, 0, -1, ""}};
-									*/
-
-
-
-	/* initializes rooms array with structs for each room in the library
-	struct room rooms[NUM_ROOMS] = {{109, 0, 0, -1, ""}, {110, 1, 0, -1, ""}, {111, 0, 0, -1, ""},
-									{202, 1, 0, -1, ""}, {205, 1, 0, -1, ""}, {220, 2, 0, -1, ""},
-									{224, 2, 0, -1, ""}, {225, 1, 0, -1, ""}, {226, 1, 0, -1, ""},
-									{228, 1, 0, -1, ""}, {301, 1, 0, -1, ""}, {308, 1, 0, -1, ""},
-									{309, 1, 0, -1, ""}, {310, 1, 0, -1, ""}, {311, 1, 0, -1, ""},
-									{315, 1, 0, -1, ""}, {316, 1, 0, -1, ""}, {317, 1, 0, -1, ""},
-									{319, 1, 0, -1, ""}, {404, 0, 0, -1, ""}, {406, 1, 0, -1, ""},
-									{411, 1, 0, -1, ""}, {412, 1, 0, -1, ""}, {413, 2, 0, -1, ""},
-									{414, 1, 0, -1, ""}, {415, 1, 0, -1, ""}};
-									*/
-
-
-
+	/* this is a terribly ugly way of initializing my 3D array of struct values, but it is the only way I could get it to work! */
 	for(i = 0; i < NUM_DAYS; i++){
 		for(j = 0; j < NUM_HOURS; j++){
 			for(k = 0; k < NUM_ROOMS; k++){
-				//calender[i][j][k] =
 				switch(k){
 					case 0:{
 							calender[i][j][k].roomNum = 109;
@@ -290,16 +246,7 @@ int main(void){
 		}
 	}
 
-	/*
-	// initializes each cell in calender[i][j] with rooms array - result is a 3D array of structs
-	for(i = 0; i < NUM_DAYS; i++){
-		for(j = 0; j < NUM_HOURS; j++){
-			memcpy(&calender, &rooms, sizeof(rooms));
-		}
-	}
-	*/
-	
-	/* prints each cell in calender */
+	/* prints each cell in calender
 	for(i = 0; i < NUM_DAYS; i++){
 		for(j = 0; j < NUM_HOURS; j++){
 			for(k = 0; k < NUM_ROOMS; k++){
@@ -308,6 +255,7 @@ int main(void){
 			}
 		}
 	}
+	*/
 
 	/* prompts user for number of threads to create - this simulates concurrent user requests */
 	printf("\nHow many threads do you want?\n");
@@ -320,7 +268,6 @@ int main(void){
 		printf("\nInvalid input\n\n");
 		return 0;
 	}
-
 	
 	/* fills request array with requests - values come from user input */
 	for(i = 0; i < numTh; i++){
@@ -347,7 +294,6 @@ int main(void){
 			return 0;
 		}
 
-
 		/* read in user input for requested day */
 		printf("\nEnter the requested day (0-29)\n");
 		printf("Choice: ");
@@ -357,7 +303,6 @@ int main(void){
 			return 0;
 		}
 
-
 		/* read in user input for requested hour */
 		printf("\nEnter the requested hour (0-14)\n");
 		printf("Choice: ");
@@ -366,7 +311,6 @@ int main(void){
 			printf("\nInvalid input\n\n");
 			return 0;
 		}
-
 
 		/* read in user input for requested room number */
 		printf("\nEnter the requested room number\n");
@@ -378,18 +322,15 @@ int main(void){
 		}
 		requests[i].id = inID;				// populate requests array with data
 		strcpy(requests[i].email, inEmail);	//
-		requests[i].day = inDay;				//
+		requests[i].day = inDay;			//
 		requests[i].time = inHour;			//
 		requests[i].rmRequested = inRmNum;	//
-
-		//printf("id: %d\temail: %s\tday: %d\ttime: %d\troomNum: %d\n", requests[i].id, requests[i].email, requests[i].day, requests[i].time, requests[i].rmRequested);
 	}
 	
 	printf("\n");
 
 	/* creates numTh threads, where numTh is determined by the user */
 	for(i = 0; i < numTh; i++){
-		printf("In main: creating thread %d\n", i);
 		returnCode = pthread_create(&pth[i], NULL, reserveFunc, &requests[i]);
 		if(returnCode){
 			printf("ERROR: return code from pthread_create is %d\n", returnCode);
@@ -397,24 +338,12 @@ int main(void){
 		}
 	}
 
-
-	/* creates numTh threads, where numTh is determined by the user
-	for(i = 0; i < numTh; i++){
-		printf("In main: creating thread %d\n", i);
-		returnCode = pthread_create(&pth[i], NULL, reserveFunc, NULL);
-		if(returnCode){
-			printf("ERROR: return code from pthread_create is %d\n", returnCode);
-			return -1;
-		}
-	}
-	*/
-
 	/* all threads join with main thread - makes main wait for all threads to finish */
 	for(i = 0; i < numTh; i++){
 		pthread_join(pth[i], NULL);
 	}
 
-	printf("This is main saying goodbye!\n\n");
+	printf("\nGoodbye!\n\n");
 
 	free(pth);						// free dynamic memory
 	pthread_mutex_destroy(&mutex1);	// destroys mutex object
