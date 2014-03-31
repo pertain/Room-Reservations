@@ -31,14 +31,24 @@ struct room{
 	char requesterEmail[256];	// default = ""
 };
 
+
+/* represents a requesting person - gets passed to a thread */
+struct request{
+	int id;
+	char email[256];
+	int rmRequested;
+};
+
 // Global variables
 pthread_mutex_t mutex1;
 int pth_count = 0;				// used to identify a thread
 
 // This is the thread function
 void *reserveFunc(void *arg){
+	struct request inSt = *(struct request *)arg;
 	pthread_mutex_lock(&mutex1);
 	printf("I am thread %d\n", pth_count);
+	printf("inSt[%d].id = %d\n", pth_count, inSt.id);
 	pth_count++;
 	pthread_mutex_unlock(&mutex1);
 	pthread_exit(NULL);
@@ -47,10 +57,9 @@ void *reserveFunc(void *arg){
 int main(void){
 	int returnCode, i, j, k;								// loop iterator ints
 	int numTh = 0;											// initializer for number of threads
-	int inID, inRmNum;
-	char inEmail[256];
 	char term;												// terminating char for input
 	struct room calender[NUM_DAYS][NUM_HOURS][NUM_ROOMS];	// 3D array of days, hours and rooms
+	struct request *requests;
 	pthread_mutex_init(&mutex1, NULL);						// initialize mutex
 	pthread_t *pth;											// initialize dynamic array of threads
 	pth = malloc(MAX_THREADS * sizeof(int *));				// allocate memory for thread array
@@ -59,12 +68,6 @@ int main(void){
 		return 1;
 	}
 
-	/* represents a requesting person - gets passed to a thread */
-	struct request{
-		int id;
-		char email[256];
-		int rmRequested;
-	} *requests;
 	requests = malloc(MAX_THREADS * sizeof(*requests));		// check that this is correct!!!
 
 	/* initializes rooms array with structs for each room in the library */
@@ -97,34 +100,73 @@ int main(void){
 	}
 	*/
 
-	/* user inputs int for number of threads to create - this simulates concurrent user requests */
+	/* prompts user for number of threads to create - this simulates concurrent user requests */
 	printf("\nHow many threads do you want?\n");
 	printf("Enter an int between 1 and 10\n");
 	printf("Choice: ");
 	fflush(stdout);
 
-	/* Error checking for user input - ensures that input is an int between 0 and MAX_THREADS */
+	/* read in user input for number of threads - ensures that input is an int between 0 and MAX_THREADS */
 	if(scanf("%d%c", &numTh, &term) != 2 || term != '\n' || numTh < 0 || numTh > MAX_THREADS){
 		printf("\nInvalid input\n\n");
 		return 0;
 	}
 
-	/*
-	printf("Enter your 6-digit user ID\n");
-	if(scanf("%d%c", &inID, &term) != 2 || term != '\n' || sizeof(inID) < 0 || numTh > MAX_THREADS){
-		printf("\nInvalid input\n\n");
-		return 0;
-	}
-	*/
-
-
+	
 	/* fills request array with requests - values come from user input */
 	for(i = 0; i < numTh; i++){
+		int inID, inRmNum;
+		char inEmail[256];
+		printf("\nRequest #%d\n", i);
+
+		/* read in user input for user ID - ensures that input is a 6-digit int */
+		printf("\nEnter your 6-digit user ID\n");
+		printf("Choice: ");
+		fflush(stdout);
+		if(scanf("%d%c", &inID, &term) != 2 || term != '\n' || inID < 100000 || inID > 999999){
+			printf("\nInvalid input\n");
+			return 0;
+		}
+
+		/* read in user input for user email */
+		printf("\nEnter your email\n");
+		printf("Choice: ");
+		fflush(stdout);
+		fgets(inEmail, 256, stdin);
+		if(strlen(inEmail) < 6){
+			printf("\nInvalid input\n");
+			return 0;
+		}
+
+		/* read in user input for requested room number */
+		printf("\nEnter the requested room number\n");
+		printf("Choice: ");
+		fflush(stdout);
+		if(scanf("%d%c", &inRmNum, &term) != 2 || term != '\n' || inRmNum < 100 || inRmNum > 499){
+			printf("\nInvalid input\n\n");
+			return 0;
+		}
+		requests[i].id = inID;				// populate requests array with data
+		strcpy(requests[i].email, inEmail);	//
+		requests[i].rmRequested = inRmNum;	//
+
+		//printf("id: %d\temail: %s\troomNum: %d\n", requests[i].id, requests[i].email, requests[i].rmRequested);
 	}
 	
 	printf("\n");
 
 	/* creates numTh threads, where numTh is determined by the user */
+	for(i = 0; i < numTh; i++){
+		printf("In main: creating thread %d\n", i);
+		returnCode = pthread_create(&pth[i], NULL, reserveFunc, &requests[i]);
+		if(returnCode){
+			printf("ERROR: return code from pthread_create is %d\n", returnCode);
+			return -1;
+		}
+	}
+
+
+	/* creates numTh threads, where numTh is determined by the user
 	for(i = 0; i < numTh; i++){
 		printf("In main: creating thread %d\n", i);
 		returnCode = pthread_create(&pth[i], NULL, reserveFunc, NULL);
@@ -133,6 +175,7 @@ int main(void){
 			return -1;
 		}
 	}
+	*/
 
 	/* all threads join with main thread - makes main wait for all threads to finish */
 	for(i = 0; i < numTh; i++){
