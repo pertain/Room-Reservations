@@ -17,6 +17,6 @@ program handles bad user input by exiting the program. As a
 result, it is very important that input is entered correctly.
 
 ```
-To compile:		gcc -pthread -o res res.c
-To run:			./res
+To compile:     gcc -pthread -o res res.c
+To run:         ./res
 ```
