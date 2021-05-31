@@ -1,4 +1,4 @@
-#Reservations
+# Reservations
 
 res.c is a multithreaded room reservation simulator
 for the TCNJ library. It was written as a project for my
